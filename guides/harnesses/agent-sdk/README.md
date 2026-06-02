@@ -406,7 +406,7 @@ Avoid running every CI build against a real model. Non-determinism makes failure
 
 Open an OTel span `agent.run` for each SDK invocation with attributes `agent.name`, `agent.run_id`, `user.id`, `prompt.sha`, `model.name`. Each tool call is a child span `agent.tool` with `tool.name`, `tool.duration_ms`, `tool.status`. Bind the same fields into structlog at the start of the request via `structlog.contextvars.bind_contextvars(...)` so every log line in the run carries them.
 
-`total_cost_usd` rolls up onto the `agent_runs` row at completion. That row plus its `tool_calls` and `run_events` children is the unit of evaluation; the OTel trace is the time-ordered view of the same data. Together they make any failed or surprising run reproducible without re-running the model.
+`total_cost_usd` rolls up onto the `agent_runs` row at completion. That row plus its `tool_calls` and `run_events` children is the unit of evaluation; the OTel trace is the time-ordered view of the same data. Together they make any failed or surprising run reproducible without re-running the model. Turning that unit into a regression suite is covered in [`guides/evals/README.md`](../../evals/README.md).
 
 ## What this guide does not cover
 
@@ -414,6 +414,7 @@ Open an OTel span `agent.run` for each SDK invocation with attributes `agent.nam
 - **Client UI** (React/TS, SSE consumption, rendering tool-call and subagent events) — `guides/client/README.md`.
 - **Auth** — bring your own. Wire it in as a FastAPI dependency that resolves `current_user`. Everything in this guide assumes that exists.
 - **Individual agents** (system prompts, tool rosters, subagent topology for *your* product) — that's per-project content under `app/server/src/agents/`, not part of the harness playbook.
+- **Evals** — turning persisted runs into a regression suite — [`guides/evals/README.md`](../../evals/README.md).
 
 ## References
 
