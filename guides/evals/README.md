@@ -2,7 +2,11 @@
 
 How to evaluate agents built with this kit, and the dataset, grader, and where-it-runs decisions made for you.
 
-**This guide applies to all three harnesses, but the substrate differs.** The `agent-sdk` and `claude-api` harnesses evaluate persisted `agent_runs` rows (plus their `tool_calls` and `run_events` children); the `claude-code` harness has no database, so it evaluates the CLI run against `prompt.md` files and scores the Astro artifacts under `app/site/`. This is the *rationale* half of the evals work — the same split the kit draws between `guides/server/` (the *why*) and the kickstart scaffold (the *worked example*). The `scaffold-eval-harness` story is the worked-example half: it instantiates the decisions made here into a runnable suite and a `scripts/eval.sh` entry point. This guide makes the calls; the scaffold implements them. Read it for the reasoning, not as a procedure to execute.
+**This guide applies to all three harnesses, but the substrate differs.** The `agent-sdk` and `claude-api` harnesses evaluate persisted `agent_runs` rows (plus their `tool_calls` and `run_events` children); the `claude-code` harness has no database, so it evaluates the CLI run against `prompt.md` files and scores the Astro artifacts under `app/site/`.
+
+This is the *rationale* half of the evals work — it makes the calls. The `scaffold-eval-harness` story is the worked-example half: it instantiates those decisions into a runnable suite and a `scripts/eval.sh` entry point. Read this for the reasoning, not as a procedure to execute.
+
+A note on tense: the kit is pre-kickstart, so the substrate this guide refers to mostly isn't built yet. `app/server/` holds only kit stubs today — no implementation, no database, no `agent_runs` table; `scripts/eval.sh` doesn't exist at all. Every reference to persisted runs below is a forward-reference to what the `agent-sdk` and `server` guides describe the substrate *will* be once a project is kickstarted, not to live code.
 
 ## At a glance
 
@@ -10,11 +14,11 @@ How to evaluate agents built with this kit, and the dataset, grader, and where-i
 |---|---|
 | Grader strategy | Hybrid — deterministic assertions on run state + LLM-as-judge against a rubric |
 | Dataset | Checked-in golden cases that diff cleanly in review, keyed by `prompt_sha` |
-| Where it runs | Local / manual, on demand, via a `scripts/eval.sh` entry point |
+| Where it runs | Local / manual, on demand, via a `scripts/eval.sh` entry point (created by the scaffold story) |
 | CI / nightly automation | Deferred to a later story |
 | Scoring | Judge score (or pass-fraction) vs. a threshold → pass/fail per case and per suite |
-| Substrate (agent-sdk / claude-api) | Persisted `agent_runs` / `tool_calls` / `run_events` rows |
-| Substrate (claude-code) | CLI run against `prompt.md`; scored against Astro artifacts in `app/site/` |
+| Substrate — SDK / API | Persisted `agent_runs` / `tool_calls` / `run_events` rows |
+| Substrate — claude-code | CLI run against `prompt.md`; scored against Astro artifacts in `app/site/` |
 
 ## What evals own
 
@@ -33,11 +37,11 @@ Evals answer one question that no other layer can: **is this agent still good?**
 
 ## The unit of evaluation
 
-The `agent-sdk` guide already names the thing evals operate on. After a run completes, the `agent_runs` row "plus its `tool_calls` and `run_events` children is the unit of evaluation; the OTel trace is the time-ordered view of the same data." That row carries everything an eval needs without re-running the model: final status, the ordered tool calls, the recorded events, and the message content.
+The `agent-sdk` guide already names the thing evals operate on: the `agent_runs` row plus its `tool_calls` and `run_events` children is "the unit of evaluation." That row carries everything an eval needs without re-running the model — final status, the ordered tool calls, the recorded events, and the message content.
 
-Critically, every `agent_runs` row persists a `prompt_sha`. The harness guide is explicit about why: "Evaluations group by `prompt_sha`, not by agent name — that's how you tell whether a regression came from a prompt change or something else." That single design decision is what makes the substrate eval-ready before any eval suite exists. A golden case is pinned to a `prompt_sha`; when the prompt changes, its hash changes, and the eval results re-group under the new hash. Attribution falls out of the data model rather than requiring bookkeeping.
+Critically, every `agent_runs` row persists a `prompt_sha`, and the harness guide is explicit about why: "Evaluations group by `prompt_sha`, not by agent name — that's how you tell whether a regression came from a prompt change or something else." That single decision makes the substrate eval-ready before any eval suite exists: a golden case is pinned to a `prompt_sha`, so when the prompt changes its hash changes and results re-group under the new hash. Attribution falls out of the data model rather than requiring bookkeeping.
 
-This vocabulary — a run row, its tool calls, its events, keyed by `prompt_sha` — is the shared foundation the per-harness sections below build on. Note that `app/server/` does not exist yet; these are forward-references to what the `agent-sdk` and `server` guides describe the substrate *will* be once a project is kickstarted, not to live code.
+That vocabulary — a run row, its tool calls and events, keyed by `prompt_sha` — is the shared foundation the per-harness sections below build on.
 
 ## The grader: a hybrid strategy
 
@@ -62,12 +66,10 @@ Evals run against a set of **golden cases** — saved inputs paired with the ass
 
 ## Scoring and regression thresholds
 
-Scoring is conceptual here — the scaffold implements the mechanics. The shape is:
+Scoring is conceptual here; the shape is:
 
 - **A judge score becomes pass/fail via a threshold.** A rubric produces a number (say a 1–5 score, or the fraction of rubric items satisfied). The suite defines a threshold — e.g. "mean rubric score ≥ 4.0" or "≥ 90% of cases pass" — below which the case or suite is a failure. Set the initial threshold from a known-good baseline run, then treat the threshold as a committed artifact: raising it ratchets quality up, lowering it should be a deliberate, reviewed decision.
-- **Read a drop by which grader failed.** This is where the hybrid strategy pays off diagnostically:
-  - **Assertion failures = a wiring regression.** A tool stopped being called, the status came back non-`ok`, the output stopped validating. This is a code or integration problem, and it is the same class of failure the mocked integration tests are meant to catch — an eval failure here usually means the test suite had a gap.
-  - **Judge-score drop with assertions still green = a prompt / quality regression.** The run was structurally fine — right tools, right shape — but the answers got worse. This points at the prompt, not the plumbing.
+- **Read a drop by which grader failed** — the diagnostic payoff of the hybrid split (see *The grader* above). An **assertion failure is a wiring regression**: a tool stopped being called, the status came back non-`ok`, the output stopped validating — a code problem, and the same class the mocked integration tests should have caught, so it usually signals a test-suite gap. A **judge-score drop with assertions still green is a prompt / quality regression**: the run was structurally fine but the answers got worse, pointing at the prompt, not the plumbing.
 - **Attribution rides on `prompt_sha` grouping.** Because results group by hash, a judge-score drop is read against the prompt revision that introduced it. "Quality fell when `prompt_sha` changed from X to Y" is a far more actionable signal than an undifferentiated score decline.
 
 ## Where evals run

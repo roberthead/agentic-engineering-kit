@@ -18,7 +18,7 @@ This guide is the *rationale* half of the evals work (the `guides/server/` patte
 
 - A new `guides/evals/README.md` exists as a peer to `guides/server/` and `guides/client/`, following the same README-as-rationale convention (the *why* plus alternatives considered, not a checklist).
 - The guide adopts a **hybrid grader strategy** as the default: deterministic assertions on persisted run state (status, tool calls made, output shape) for wiring/structure, plus **LLM-as-judge against a rubric** for open-ended answer quality. It explains when each applies and why the split mirrors the kit's existing mocked-vs-live test split.
-- The guide specifies the **dataset format and location** (golden cases as checked-in files that diff cleanly in review, keyed so regressions are attributable; consistent with the `prompt_sha`-grouping convention already in the agent-sdk guide).
+- The guide specifies the **dataset properties** (golden cases as checked-in files that diff cleanly in review, keyed by `prompt_sha` so regressions are attributable, consistent with the agent-sdk guide's grouping convention) and intentionally **defers the exact file format and path** to the `scaffold-eval-harness` story rather than pre-committing them. _(Reworded at finish to match the locked decision; originally read "dataset format and location," which conflicted with the deferral.)_
 - The guide takes a clear stance on **where evals run**: local/manual via a `scripts/eval.sh` entry point, run on demand. It explicitly defers CI/nightly automation to a later story and explains *why* real-model evals don't belong in `scripts/validate.sh` (non-determinism, cost, latency — echoing the existing "Avoid running every CI build against a real model" warning).
 - The guide has **per-harness sections** covering the substrate divergence:
   - `agent-sdk` / `claude-api` — evals build on the persisted `agent_runs`/`tool_calls`/`run_events` rows.
@@ -105,3 +105,23 @@ Verify line numbers at implementation time — they drift.
 | Cross-refs in claude-api / agent-sdk point to the guide | Edits §1, §2 |
 | Root `CLAUDE.md` Layout honest; all-three-but-different-substrate caveat | Edit §3 |
 | Root `README.md` pointer | N/A — skipped (decision locked) |
+
+## Learnings
+
+### What went well
+
+- **Locking decisions before implementing paid off.** By the time the writing agents ran, every contentious call (hybrid grader, defer format, skip README) was settled — so the parallel agents had zero ambiguity and produced near-final work in one pass.
+- **File-disjoint parallelism** (guide vs. cross-reference edits) ran with no conflicts; both workstreams landed clean.
+- **Grounding the guide in real quotes** from the existing guides gave it credibility — the review verified every quote was accurate and undistorted.
+
+### What was surprising
+
+- **The story-planner couldn't spawn its own sub-agents** in this environment and synthesized the specialist views itself. The plan was still solid, but the "team" was nominal at plan time — the real multi-agent value showed up at *implement* and *review*, not *plan*.
+- **Writing a docs guide exposed a latent inconsistency in the kit itself:** root `CLAUDE.md` says "create all three scripts," but evals introduces a fourth (`scripts/eval.sh`). The rationale layer surfaced a seam in the existing instructions.
+- **The single factual slip was inside the accuracy caveat** — the line meant to ensure forward-reference honesty ("`app/server/` does not exist yet") was itself wrong, since the stub directory exists. Forward-reference framing is easy to overshoot.
+
+### What to do differently
+
+- **Reconcile acceptance-criteria wording with locked decisions at decision time, not at finish** (the AC3 "format and location" vs. "defer format" conflict).
+- **When forward-referencing not-yet-existing paths, check each against the actual tree** — stub dirs like `app/server/` exist even pre-kickstart.
+- **Assign cross-story seams to an owning story explicitly** (the `eval.sh` fourth-script question) so they're not discovered in review.
