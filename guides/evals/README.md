@@ -114,4 +114,4 @@ The hybrid default is the synthesis: keep the cheap deterministic assertions (th
 
 - `guides/server/README.md` — the README-as-rationale pattern this guide follows, and the persistence layer (SQLAlchemy / Postgres) the run substrate lives in.
 - `guides/harnesses/agent-sdk/README.md` — the "unit of evaluation" language (`agent_runs` + `tool_calls` + `run_events`), the `prompt_sha` grouping convention, and the mocked-vs-live test split this guide's grader strategy mirrors.
-- `../../user-stories/backlog/scaffold-eval-harness.md` — the worked-example half: instantiates these decisions into a runnable suite, finalizes the dataset format and path, and creates the `scripts/eval.sh` entry point.
+- `templates/` — the worked-example half: copyable templates (the hybrid grader, golden cases, and `eval.sh`) that kickstart instantiates into `app/server/src/evals/`. See `../../user-stories/done/scaffold-eval-harness.md` for the story that built them.

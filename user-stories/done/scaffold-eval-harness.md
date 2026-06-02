@@ -219,3 +219,23 @@ End-to-end, following repo script conventions (`#!/usr/bin/env bash`, `set -euo 
 6. Mocked-vs-live split honored; not in `validate.sh`; `eval.sh` is itself the live gate -> §4, §6 (CLAUDE.md wording).
 7. Contributor runs it, sees scored output, knows where to add cases -> §1 (`shared/README.md`), §3/§4 (`runner.py` prints + exits), §6 (`app/server/CLAUDE.md`). *Scored-output is template-only — demonstrated by the named, non-skippable "run `eval.sh` once" KICKSTART step (§6); no dry-run (locked, §7).*
 8. KICKSTART.md + `app/server/CLAUDE.md` updated -> §6.
+
+## Learnings
+
+### What went well
+
+- **Reviewing the plan before writing code paid off twice over.** The plan-review team caught design flaws that were cheap to fix in prose and expensive in code: the claude-api half was built on an unpinned "planning sketch" substrate (→ introduced a documented run contract), the eval path ignored the server `src/` layout, and the copy commands had an unexplained hyphen→underscore translation.
+- **Pinning the contract verbatim in every agent's prompt let four agents write disjoint files in parallel with zero interface drift** — they even cross-verified against each other's landed files. Writing the shared contract first (or embedding it) is the move that makes multi-agent codegen safe.
+- **A second review of the *written code* (not just the plan) caught a class of issues plan-review structurally couldn't** — the judge crashing the whole suite on a fenced/malformed response, an overlay comment that lied about the runner's async contract, and stray bytecode about to be committed.
+
+### What was surprising
+
+- **The one MUST-FIX in the code review was self-inflicted:** the `py_compile` step used to "verify" the templates left `__pycache__/*.pyc` artifacts, and the kit had no ignore rule for them — so verification tooling created the exact mess the review had to catch. Add ignore rules before running tools, not after.
+- **"Implement" in a pre-kickstart kit means writing inert templates** — correct-by-reading, not correct-by-running. There's no test suite; the safety net is review plus kickstart-time execution. That inverts the usual confidence model and makes the review passes load-bearing.
+- **Writing real template code surfaced an unpinned decision in a sibling guide** (claude-api is still a "planning sketch"). The run-contract indirection was the design move that let the scaffold not front-run that guide.
+
+### What to do differently
+
+- **Add language-appropriate ignore rules (`__pycache__/`, `*.pyc`) to a kit before any tooling runs over it.** The kit had none because it had no code yet; the first code-adjacent action should have included them.
+- **Decide the import-root / layout question up front** when a template references not-yet-existing app modules, so the `# TODO(kickstart)` seams point at the right place the first time (the `src/` path drift in `judge.py` vs. the overlays was avoidable).
+- **Make "write the shared contract first, then fan out" the default** for multi-agent implementation against a common interface — it's what kept the parallel agents coherent here.
