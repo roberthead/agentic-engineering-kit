@@ -8,7 +8,7 @@ Playbook for initializing an agentic engineering project that uses Anthropic's C
 
 `claude-api` is the same shape as `agent-sdk` (FastAPI server + SPA client, multi-user, persisted, SSE streaming) — but you own the agent loop. Default to mirroring the `agent-sdk` guide's structure; only diverge where building the loop yourself changes the answer. That keeps the two guides comparable.
 
-**Tone target.** Code-heavy, not narrative. Skip prompt-engineering theory and evals — those are application-layer concerns covered elsewhere. Thread one realistic scenario through the guide (e.g. a 5-turn conversation that exercises streaming, a tool call on turn 2, a cache hit on turn 3, an extended-thinking request on turn 4) so each section extends a working example rather than introducing a new toy problem.
+**Tone target.** Code-heavy, not narrative. Skip prompt-engineering theory and evals — those are application-layer concerns covered in [`guides/evals/README.md`](../../evals/README.md). Thread one realistic scenario through the guide (e.g. a 5-turn conversation that exercises streaming, a tool call on turn 2, a cache hit on turn 3, an extended-thinking request on turn 4) so each section extends a working example rather than introducing a new toy problem.
 
 **Section order is by implementation milestone, not by API surface.** A builder should be able to read top-to-bottom and have a working harness at each section's end.
 
@@ -25,7 +25,7 @@ Playbook for initializing an agentic engineering project that uses Anthropic's C
    - **Batch API access** for non-interactive workloads (50% off).
    - **Per-token streaming** (`content_block_delta` text + `input_json_delta` tool args). Real, but a thin reason on its own.
    - **Custom tool dispatch policies** and raw `usage` data the SDK hides.
-2. **Assumed constraints** — same stack as agent-sdk; explicit non-goal: this guide doesn't re-derive the server/client guides, doesn't teach prompt engineering, doesn't cover evals or RAG.
+2. **Assumed constraints** — same stack as agent-sdk; explicit non-goal: this guide doesn't re-derive the server/client guides, doesn't teach prompt engineering, doesn't cover evals (see [`guides/evals/README.md`](../../evals/README.md)) or RAG.
 3. **Architecture — the agent loop** — the big swap. No `query()` / `ClaudeSDKClient`. Instead: a hand-rolled async loop around `anthropic.AsyncAnthropic().messages.stream(...)` that walks the response's content-block list, dispatches `tool_use` blocks to a tool registry, appends `tool_result` blocks (each carrying the originating `tool_use_id`), and re-enters the loop. Show one concrete skeleton end-to-end, not fragments. Cover:
    - **Loop-exit conditions.** Continue on `stop_reason == "tool_use"`. Handle `pause_turn` (server-side tool-sampling hit its iteration cap — re-send the response as-is to let Claude continue). Surface `refusal` and `model_context_window_exceeded` as terminal.
    - **Multi-block response handling.** The response is *always* a list of content blocks (`thinking`, `text`, `tool_use`, possibly more). Never index `[0]` blindly.
@@ -59,7 +59,7 @@ Playbook for initializing an agentic engineering project that uses Anthropic's C
 17. **Cancellation** — same cooperative pattern, but you can cancel mid-stream (between deltas), not just between messages. Better than agent-sdk on this axis.
 18. **Testing** — same split as agent-sdk. "Mock the SDK transport" becomes "mock `messages.stream`" — easier, since the API surface is narrower. Show fixtures for streamed responses including `thinking_delta` events.
 19. **Observability** — same OTel/structlog story; add token + cache-hit counters, per-call cost, stream-event counters, and `request_id` on every log line since you have them.
-20. **What this guide does not cover** — same disclaimers as agent-sdk (server stack, client UI, auth, individual agents). Add: prompt engineering, evals, RAG, MCP server *authoring* (consuming MCP servers from your harness is fine and is covered under tools).
+20. **What this guide does not cover** — same disclaimers as agent-sdk (server stack, client UI, auth, individual agents). Add: prompt engineering, [evals](../../evals/README.md), RAG, MCP server *authoring* (consuming MCP servers from your harness is fine and is covered under tools).
 
 ## Open questions to resolve before drafting
 

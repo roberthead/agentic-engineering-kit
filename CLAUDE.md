@@ -29,6 +29,7 @@ Two top-level concerns: **how to set the project up** (`guides/`) and **what the
   - `guides/harnesses/claude-api/` — custom harness built on the Claude API, driven through an application UI. Agentic software written in python.
 - `guides/client/` — recommended (default) frontend tech stack and a discussion of alternatives. **Applies to `agent-sdk` and `claude-api` harnesses only.**
 - `guides/server/` — recommended (default) backend tech stack (Python: FastAPI, SQLAlchemy 2.x async, Postgres, `uv`). **Applies to `agent-sdk` and `claude-api` harnesses only.**
+- `guides/evals/` — rationale guide for evaluating agent behavior: turning runs into a regression suite. **Applies to all three harnesses**, but with different substrate — DB-backed runs (`agent_runs` + `tool_calls` + `run_events`) for `agent-sdk` and `claude-api`; CLI sessions and Astro artifacts for `claude-code`.
 
 ### `app/` — your project
 
