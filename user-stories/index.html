@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Stories — Kanban Board</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 2rem;
+      min-height: 100vh;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      font-weight: 600;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      max-width: 1400px;
+    }
+    .column {
+      background: #1e293b;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      min-height: 200px;
+    }
+    .column-header {
+      font-size: 0.875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .column-header.backlog { background: #475569; color: #f1f5f9; }
+    .column-header.current { background: #2563eb; color: #eff6ff; }
+    .column-header.done    { background: #16a34a; color: #f0fdf4; }
+    .count {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 999px;
+      padding: 0.1rem 0.6rem;
+      font-size: 0.75rem;
+    }
+    .card {
+      display: block;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 0.5rem;
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.75rem;
+      color: #e2e8f0;
+      text-decoration: none;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    .card:hover {
+      border-color: #64748b;
+      transform: translateY(-1px);
+    }
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    .empty {
+      color: #64748b;
+      font-size: 0.85rem;
+      font-style: italic;
+      padding: 0.5rem 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>User Stories</h1>
+  <div class="board">
+    <div class="column">
+      <div class="column-header backlog">
+        <span>Backlog</span>
+        <span class="count">1</span>
+      </div>
+      <a class="card" href="backlog/scaffold-eval-harness.md">
+        <span class="card-title">Scaffold Eval Harness During Kickstart</span>
+      </a>
+    </div>
+    <div class="column">
+      <div class="column-header current">
+        <span>Current</span>
+        <span class="count">1</span>
+      </div>
+      <a class="card" href="current/add-evals-guide.md">
+        <span class="card-title">Add Evals Guide</span>
+      </a>
+    </div>
+    <div class="column">
+      <div class="column-header done">
+        <span>Done</span>
+        <span class="count">0</span>
+      </div>
+      <div class="empty">No stories yet</div>
+    </div>
+  </div>
+</body>
+</html>
