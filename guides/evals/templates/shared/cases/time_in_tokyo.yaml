@@ -1,0 +1,36 @@
+# Judge-led case: the assertions confirm the run was structurally sound
+# (status ok + the right tool fired with the right timezone), then the judge —
+# handed the get_current_time result via include_tool_results — grades whether
+# the spoken answer is correct and coherent. Anchoring the judge on a
+# deterministic tool result keeps this case robust even though the concierge's
+# system prompt is bespoke per project.
+
+id: time_in_tokyo
+description: Concierge reports the current time in Tokyo, coherently and correctly.
+
+# Injected at run time by the overlay's produce_run.py; ships null.
+prompt_sha: null
+
+input:
+  kind: chat
+  content: "What time is it in Tokyo?"
+
+assertions:
+  status: ok
+  tool_calls:
+    - name: get_current_time
+      # The concierge must call the tool for the Tokyo timezone specifically.
+      args_contains:
+        timezone: "Asia/Tokyo"
+  output_shape: non_empty_text
+
+judge:
+  # Splice the get_current_time result into the judge prompt so it grades the
+  # answer against the actual tool output, not a guess.
+  include_tool_results:
+    - get_current_time
+  rubric:
+    - "States a time that matches the get_current_time tool result"
+    - "Answer is coherent and directly addresses the Tokyo time question"
+  # Mean rubric score (1-5) must be >= 4.0 to pass.
+  threshold: 4.0

@@ -18,9 +18,36 @@ On first contact, don't wait for the user to lead — they may not know what thi
 
 ## Phase 2 — kickstart
 
-Once you've picked one, collaborate with the user to build out `app/` per its guide. Part of the kickstart is creating the three entry-point scripts under `scripts/` — see the Layout section in the root `CLAUDE.md`. The first agent to build is the `concierge` — see the MVP section below.
+Once you've picked one, collaborate with the user to build out `app/` per its guide. Part of the kickstart is creating the entry-point scripts under `scripts/` (the universal three; plus `scripts/eval.sh` for `agent-sdk`/`claude-api`) — see the Layout section in the root `CLAUDE.md`. The first agent to build is the `concierge` — see the MVP section below.
 
 During the kickstart, also distill the prescriptive bits of the relevant guide(s) into the `app/*/CLAUDE.md` files. The guide stays as rationale; the `CLAUDE.md` becomes the live rulebook future-you reads when working in that subtree. Don't copy the guide wholesale — extract the rules, drop the alternatives discussion, and reference the guide for the *why*.
+
+### Eval scaffold (`agent-sdk` / `claude-api` only)
+
+The `agent-sdk` and `claude-api` harnesses get a minimal eval harness scaffolded from `guides/evals/templates/`. Skip this step entirely for `claude-code` (its eval scaffold is a deferred follow-up). The template directory names use underscores because they become Python packages; map the hyphenated harness name to the underscored template dir.
+
+1. Copy the harness-agnostic core into the server's eval package:
+
+   ```bash
+   cp -R guides/evals/templates/shared/* app/server/src/evals/
+   ```
+
+2. Copy the matching harness overlay onto it (it merges onto the already-copied `shared/`):
+
+   - `agent-sdk`: `cp -R guides/evals/templates/agent_sdk/* app/server/src/evals/`
+   - `claude-api`: `cp -R guides/evals/templates/claude_api/* app/server/src/evals/`
+
+3. Copy the entry point:
+
+   ```bash
+   cp guides/evals/templates/eval.sh scripts/eval.sh
+   ```
+
+4. Resolve the `# TODO(kickstart)` seams: wire `produce_run.py` to the concierge runner (and have it supply the `RunRecord` + `prompt_sha`); point `judge.py` at the Anthropic client and a cheap judge model from `Settings`; set `<import-root>` in `eval.sh` to the project's configured import root; and confirm the `prompt_sha` source (agent-sdk hashes the concierge `prompt.md`; claude-api computes it from its block-list prompt).
+
+5. **Run `scripts/eval.sh` once and confirm you see scored per-case output.** (Non-skippable — this is the only place the eval scaffold is demonstrated end-to-end. It hits a real model and spends tokens, so expect the credential + cost guard to fire.)
+
+The two golden cases target the concierge's two fixed tools (`list_agents`, `get_current_time`), and the judge case anchors its rubric on the deterministic tool result so it survives a bespoke, project-specific system prompt.
 
 ## MVP — concierge agent
 

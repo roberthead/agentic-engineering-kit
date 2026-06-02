@@ -5,3 +5,7 @@
 
 # Generated per-agent mirror (source of truth lives in app/agents/<name>/prompt.md).
 .claude/agents/
+
+# Python bytecode (e.g. from the eval templates under guides/evals/templates/).
+__pycache__/
+*.pyc

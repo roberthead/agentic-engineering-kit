@@ -1,0 +1,25 @@
+# Assertion-led case (no judge block): purely deterministic checks on the run.
+# This is a WIRING-LEVEL FLOOR. On day one the agent roster is just [concierge],
+# so "result_contains: concierge" is near-tautological — it proves the list_agents
+# tool is wired and returns the roster, not that the roster is interesting. Its
+# value grows as the roster grows: the same check becomes a real regression guard
+# once more agents exist and one could go missing. Mirrors KICKSTART.md's framing
+# of list_agents as a smoke test that tool wiring works end-to-end.
+
+id: list_agents_includes_concierge
+description: Concierge can enumerate the available agents and includes itself.
+
+# Injected at run time by the overlay's produce_run.py; ships null.
+prompt_sha: null
+
+input:
+  kind: chat
+  content: "Which agents are available?"
+
+assertions:
+  status: ok
+  tool_calls:
+    - name: list_agents
+      # No args to constrain; just assert the roster output mentions concierge.
+      result_contains: concierge
+  output_shape: non_empty_text

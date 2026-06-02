@@ -1,0 +1,6 @@
+# Kit-root Ruff config.
+#
+# guides/evals/templates/ holds inert, copyable reference code that kickstart
+# copies into app/server/src/ and scripts/. It imports app modules that don't
+# exist pre-kickstart, so it is excluded from any kit-level lint gate.
+extend-exclude = ["guides/evals/templates"]
